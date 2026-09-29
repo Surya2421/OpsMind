@@ -1,0 +1,8 @@
+{
+  "service": "api-gateway",
+  "version": "v2.8",
+  "upstream_name": "payment-backend",
+  "upstream_url": "http://127.0.0.1:8081",
+  "timeout_seconds": 3,
+  "retries": 1
+}

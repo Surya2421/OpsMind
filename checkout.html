@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>PAYFLOW — Enterprise Checkout</title>
+<style>
+:root {
+  --bg: #121210;
+  --panel: #181815;
+  --panel-card: #1f1f1b;
+  --border: #303029;
+  --border-light: #3e3e35;
+  --text: #f5f4ef;
+  --text-bright: #ffffff;
+  --muted: #9c988d;
+  --accent: #c9983e;
+  --accent-hover: #dbab4f;
+  --success-bg: #152215;
+  --success-border: #2f4c30;
+  --success-text: #9fd4a2;
+  --danger-bg: #261513;
+  --danger-border: #4f2520;
+  --danger-text: #f09a8f;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* Header */
+header {
+  border-bottom: 1px solid var(--border);
+  background: rgba(24, 24, 21, 0.95);
+  padding: 14px 5%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brand-name {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--text-bright);
+}
+.brand-tag {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.system-telemetry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.status-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--panel-card);
+  font-weight: 600;
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #666;
+}
+.status-dot.online {
+  background: #5a9e5f;
+}
+.status-dot.degraded {
+  background: #c95647;
+}
+
+.nav-opsmind-btn {
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: #121210;
+  background: var(--accent);
+  padding: 6px 14px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.nav-opsmind-btn:hover {
+  background: var(--accent-hover);
+}
+
+/* Main Container */
+main {
+  max-width: 1040px;
+  margin: 32px auto;
+  padding: 0 24px 80px;
+}
+
+.page-title {
+  margin-bottom: 24px;
+}
+.page-title h1 {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-bright);
+  margin-bottom: 6px;
+}
+.page-title p {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Grid */
+.checkout-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+@media (max-width: 840px) {
+  .checkout-grid { grid-template-columns: 1fr; }
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 24px;
+}
+.card-title {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--muted);
+  margin-bottom: 16px;
+  font-weight: 700;
+}
+
+/* Plan Summary */
+.plan-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.plan-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-bright);
+}
+.plan-price {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-bright);
+}
+.plan-period {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 400;
+}
+.plan-desc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.4;
+  margin-bottom: 18px;
+}
+.feature-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.feature-item {
+  font-size: 13px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.feature-item::before {
+  content: "—";
+  color: var(--accent);
+}
+
+.summary-table {
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+}
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+}
+.summary-row.total {
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  margin-top: 4px;
+  color: var(--text-bright);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* Payment Form */
+.form-field {
+  margin-bottom: 14px;
+}
+.field-label {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+.field-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--panel-card);
+  border: 1px solid var(--border);
+  color: var(--text-bright);
+  font-size: 13px;
+  font-family: inherit;
+}
+.field-input:focus {
+  outline: none;
+  border-color: var(--border-light);
+}
+.form-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* Pay Now Button */
+.btn-pay-now {
+  width: 100%;
+  margin-top: 18px;
+  padding: 14px;
+  background: var(--accent);
+  color: #121210;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-pay-now:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+.btn-pay-now:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Status / Result Card */
+.status-panel {
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  padding: 22px 24px;
+}
+.status-panel.healthy {
+  border-color: var(--success-border);
+  background: var(--success-bg);
+}
+.status-panel.incident {
+  border-color: var(--danger-border);
+  background: var(--danger-bg);
+}
+.status-panel.idle {
+  border-color: var(--border);
+  background: var(--panel);
+}
+
+.status-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.status-panel-title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.status-panel.healthy .status-panel-title { color: var(--success-text); }
+.status-panel.incident .status-panel-title { color: var(--danger-text); }
+.status-panel.idle .status-panel-title { color: var(--muted); }
+
+.status-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+}
+.status-panel.healthy .status-badge {
+  background: #1a301a;
+  border: 1px solid var(--success-border);
+  color: var(--success-text);
+}
+.status-panel.incident .status-badge {
+  background: #381a17;
+  border: 1px solid var(--danger-border);
+  color: var(--danger-text);
+}
+.status-panel.idle .status-badge {
+  background: var(--panel-card);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.status-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  margin-top: 10px;
+}
+.status-line {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.status-line:last-child { border-bottom: none; }
+.status-line .label { color: var(--muted); }
+.status-line .val { font-weight: 600; color: var(--text-bright); }
+
+.status-action-box {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.status-action-link {
+  color: var(--danger-text);
+  font-weight: 700;
+  text-decoration: underline;
+  margin-top: 6px;
+  display: inline-block;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="brand-name">PAYFLOW</span>
+    <span class="brand-tag">Production Checkout</span>
+  </div>
+
+  <div class="system-telemetry">
+    <div class="status-pill" id="pillBackend">
+      <span class="status-dot" id="dotBackend"></span>
+      <span>Payment Service: <b id="txtBackend">CHECKING</b></span>
+    </div>
+    <div class="status-pill" id="pillGateway">
+      <span class="status-dot" id="dotGateway"></span>
+      <span>Gateway: <b id="txtGateway">CHECKING</b></span>
+    </div>
+    <a href="http://127.0.0.1:8000" target="_blank" class="nav-opsmind-btn">
+      OpsMind Console &rarr;
+    </a>
+  </div>
+</header>
+
+<main>
+  <div class="page-title">
+    <h1>Complete Checkout</h1>
+    <p>Target payment checkout routed through reverse-proxy API Gateway (:8080) to Payment Backend (:8081).</p>
+  </div>
+
+  <div class="checkout-grid">
+    <!-- Left: Plan / Order Summary -->
+    <div class="card">
+      <div class="card-title">Order Summary</div>
+
+      <div class="plan-header">
+        <div>
+          <div class="plan-name">Payflow Infrastructure Tier</div>
+          <div class="plan-period">Annual Enterprise Subscription</div>
+        </div>
+        <div style="text-align: right;">
+          <div class="plan-price">$2,400.00</div>
+          <div class="plan-period">billed annually</div>
+        </div>
+      </div>
+
+      <div class="plan-desc">
+        Dedicated payment routing cluster with high-availability API gateway, automated settlement, and 99.99% uptime SLA.
+      </div>
+
+      <ul class="feature-list">
+        <li class="feature-item">Global API Gateway reverse proxy ingress (:8080)</li>
+        <li class="feature-item">Real-time payment authorization engine (:8081)</li>
+        <li class="feature-item">Sub-50ms gateway settlement pipeline</li>
+        <li class="feature-item">Continuous automated incident response monitoring</li>
+      </ul>
+
+      <div class="summary-table">
+        <div class="summary-row">
+          <span>Enterprise License (1 Year)</span>
+          <span>$2,400.00</span>
+        </div>
+        <div class="summary-row">
+          <span>Gateway Ingress & Routing</span>
+          <span>Included</span>
+        </div>
+        <div class="summary-row">
+          <span>Estimated Sales Tax</span>
+          <span>$0.00</span>
+        </div>
+        <div class="summary-row total">
+          <span>Total Due Now</span>
+          <span style="color: var(--accent);">$2,400.00 USD</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Payment Method -->
+    <div class="card">
+      <div class="card-title">Payment Method</div>
+
+      <div class="form-field">
+        <label class="field-label">Customer / Billing Email</label>
+        <input type="text" class="field-input" value="sarah.jenkins@stratos-labs.io" readonly />
+      </div>
+
+      <div class="form-field">
+        <label class="field-label">Cardholder Name</label>
+        <input type="text" class="field-input" value="Sarah Jenkins (VP Infrastructure)" readonly />
+      </div>
+
+      <div class="form-field">
+        <label class="field-label">Corporate Card Number</label>
+        <input type="text" class="field-input" value="•••• •••• •••• 4242" readonly style="font-family: var(--font-mono);" />
+      </div>
+
+      <div class="form-split">
+        <div class="form-field">
+          <label class="field-label">Expiration Date</label>
+          <input type="text" class="field-input" value="09 / 29" readonly style="font-family: var(--font-mono);" />
+        </div>
+        <div class="form-field">
+          <label class="field-label">Security CVC</label>
+          <input type="text" class="field-input" value="421" readonly style="font-family: var(--font-mono);" />
+        </div>
+      </div>
+
+      <button class="btn-pay-now" id="btnPayNow" onclick="executePayment()">
+        PAY NOW ($2,400.00)
+      </button>
+    </div>
+  </div>
+
+  <!-- Real Payment Status Panel -->
+  <div class="status-panel idle" id="statusPanel">
+    <div class="status-panel-head">
+      <span class="status-panel-title" id="statusTitle">Payment: Ready for Authorization</span>
+      <span class="status-badge" id="statusBadge">IDLE</span>
+    </div>
+
+    <div class="status-lines" id="statusLines">
+      <div class="status-line">
+        <span class="label">Target Endpoint:</span>
+        <span class="val">http://127.0.0.1:8080/api/v1/payments/process</span>
+      </div>
+      <div class="status-line">
+        <span class="label">Architecture Route:</span>
+        <span class="val">Browser &rarr; API Gateway (:8080) &rarr; Payment Backend (:8081)</span>
+      </div>
+      <div class="status-line">
+        <span class="label">Transaction State:</span>
+        <span class="val">Awaiting user click on PAY NOW</span>
+      </div>
+    </div>
+
+    <div class="status-action-box" id="statusActionBox" style="display: none;"></div>
+  </div>
+</main>
+
+<script>
+const GATEWAY_URL = 'http://127.0.0.1:8080';
+const BACKEND_URL = 'http://127.0.0.1:8081';
+
+// Probe real system endpoints
+async function probeSystemStatus() {
+  // 1. Probe Payment Backend directly
+  try {
+    const resBe = await fetch(`${BACKEND_URL}/health`, { method: 'GET', cache: 'no-store' });
+    if (resBe.ok) {
+      document.getElementById('dotBackend').className = 'status-dot online';
+      document.getElementById('txtBackend').textContent = 'ONLINE';
+    } else {
+      document.getElementById('dotBackend').className = 'status-dot degraded';
+      document.getElementById('txtBackend').textContent = 'OFFLINE';
+    }
+  } catch (_) {
+    document.getElementById('dotBackend').className = 'status-dot degraded';
+    document.getElementById('txtBackend').textContent = 'OFFLINE';
+  }
+
+  // 2. Probe API Gateway
+  try {
+    const resGw = await fetch(`${GATEWAY_URL}/health`, { method: 'GET', cache: 'no-store' });
+    if (resGw.ok) {
+      document.getElementById('dotGateway').className = 'status-dot online';
+      document.getElementById('txtGateway').textContent = 'ONLINE';
+    } else {
+      document.getElementById('dotGateway').className = 'status-dot degraded';
+      document.getElementById('txtGateway').textContent = 'DEGRADED';
+    }
+  } catch (_) {
+    document.getElementById('dotGateway').className = 'status-dot degraded';
+    document.getElementById('txtGateway').textContent = 'UNREACHABLE';
+  }
+}
+
+// Execute real payment through API Gateway
+async function executePayment() {
+  const btn = document.getElementById('btnPayNow');
+  const panel = document.getElementById('statusPanel');
+  const title = document.getElementById('statusTitle');
+  const badge = document.getElementById('statusBadge');
+  const lines = document.getElementById('statusLines');
+  const actionBox = document.getElementById('statusActionBox');
+
+  btn.disabled = true;
+  btn.textContent = 'Processing Payment...';
+  panel.className = 'status-panel idle';
+  title.textContent = 'Routing Payment Through Gateway (:8080)...';
+  badge.textContent = 'PENDING';
+  actionBox.style.display = 'none';
+
+  const t0 = performance.now();
+
+  try {
+    const res = await fetch(`${GATEWAY_URL}/api/v1/payments/process`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        amount: 2400.00,
+        currency: 'USD',
+        plan: 'Payflow Enterprise Plan',
+        cardholder: 'Sarah Jenkins'
+      })
+    });
+
+    const latency = Math.round(performance.now() - t0);
+    let data = null;
+    try {
+      data = await res.json();
+    } catch (_) {
+      data = { raw: await res.text() };
+    }
+
+    if (res.ok) {
+      // HEALTHY / RECOVERED STATE
+      panel.className = 'status-panel healthy';
+      title.textContent = 'Payment: SUCCESS';
+      badge.textContent = `HTTP ${res.status} APPROVED`;
+      lines.innerHTML = `
+        <div class="status-line"><span class="label">Transaction ID:</span><span class="val">${data.transaction_id || 'tx_success'}</span></div>
+        <div class="status-line"><span class="label">Status:</span><span class="val">${data.status || 'APPROVED'}</span></div>
+        <div class="status-line"><span class="label">Amount Authorized:</span><span class="val">$${(data.amount || 2400).toFixed(2)} ${data.currency || 'USD'}</span></div>
+        <div class="status-line"><span class="label">Verified Route:</span><span class="val">Browser &rarr; API Gateway (:8080) &rarr; Payment Backend (:8081)</span></div>
+        <div class="status-line"><span class="label">Gateway Latency:</span><span class="val">${latency}ms</span></div>
+      `;
+      actionBox.style.display = 'block';
+      actionBox.style.color = 'var(--success-text)';
+      actionBox.innerHTML = '<strong>Transaction Verified</strong>: API Gateway cleanly proxied the request to the upstream payment backend and returned 200 OK.';
+    } else {
+      // INCIDENT STATE (REAL 502)
+      panel.className = 'status-panel incident';
+      title.textContent = `Payment: FAILED — HTTP ${res.status} Bad Gateway`;
+      badge.textContent = `HTTP ${res.status} FAILED`;
+      lines.innerHTML = `
+        <div class="status-line"><span class="label">HTTP Error:</span><span class="val">HTTP ${res.status} ${data.error || 'Bad Gateway'}</span></div>
+        <div class="status-line"><span class="label">Gateway Message:</span><span class="val">${data.message || 'Gateway failed to connect to upstream service'}</span></div>
+        <div class="status-line"><span class="label">Attempted Target:</span><span class="val">${data.upstream_target || 'http://127.0.0.1:8099/api/v1/payments/process'}</span></div>
+        <div class="status-line"><span class="label">Error Detail:</span><span class="val">${data.detail || 'Connection refused'}</span></div>
+        <div class="status-line"><span class="label">Round-Trip Latency:</span><span class="val">${latency}ms</span></div>
+      `;
+      actionBox.style.display = 'block';
+      actionBox.style.color = 'var(--danger-text)';
+      actionBox.innerHTML = `
+        <strong>Incident In Progress</strong>: The API Gateway returned a real HTTP 502 Bad Gateway because upstream connection failed.
+        <br/>
+        <a href="http://127.0.0.1:8000" target="_blank" class="status-action-link">
+          Open OpsMind Console to Investigate & Remediate Incident &rarr;
+        </a>
+      `;
+    }
+  } catch (err) {
+    // Network refusal if gateway not running
+    panel.className = 'status-panel incident';
+    title.textContent = 'Payment: FAILED — Gateway Unreachable';
+    badge.textContent = 'OFFLINE';
+    lines.innerHTML = `
+      <div class="status-line"><span class="label">Network Error:</span><span class="val">${err.message}</span></div>
+      <div class="status-line"><span class="label">Target:</span><span class="val">${GATEWAY_URL}/api/v1/payments/process</span></div>
+    `;
+    actionBox.style.display = 'block';
+    actionBox.style.color = 'var(--danger-text)';
+    actionBox.innerHTML = '<strong>Gateway Offline</strong>: The API Gateway process on port 8080 is not accepting connections.';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'PAY NOW ($2,400.00)';
+    probeSystemStatus();
+  }
+}
+
+// Initial status probe
+probeSystemStatus();
+setInterval(probeSystemStatus, 2500);
+</script>
+</body>
+</html>

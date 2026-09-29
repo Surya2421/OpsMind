@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>OpsMind — Real AI Incident Response Console</title>
+<style>
+:root {
+  --bg: #11110f;
+  --panel: #181816;
+  --panel2: #20201d;
+  --panel3: #282824;
+  --text: #f5f2e9;
+  --muted: #a8a398;
+  --accent: #d2a84a;
+  --accent2: #82a76b;
+  --danger: #c76b5a;
+  --border: #34342f;
+  --shadow: 0 14px 40px rgba(0,0,0,.35);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: linear-gradient(180deg, #131311 0%, #0e0e0c 100%);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+}
+nav {
+  height: 64px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4%;
+  position: sticky;
+  top: 0;
+  background: rgba(17,17,15,.96);
+  backdrop-filter: blur(12px);
+  z-index: 100;
+}
+.logo { font-weight: 800; font-size: 1.15rem; letter-spacing: .5px; }
+.logo b { color: var(--accent); }
+.telemetry { display: flex; gap: 14px; font-size: 12px; }
+.tele-item { display: flex; align-items: center; gap: 6px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: #555; }
+.dot.green { background: var(--accent2); box-shadow: 0 0 6px rgba(130,167,107,.5); }
+.dot.amber { background: var(--accent); box-shadow: 0 0 6px rgba(210,168,74,.5); }
+.dot.red { background: var(--danger); box-shadow: 0 0 6px rgba(199,107,90,.5); }
+
+main { max-width: 1280px; margin: 0 auto; padding: 28px 4% 80px; }
+.header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 20px;
+}
+.header-bar h1 { font-size: 32px; margin: 0 0 6px; line-height: 1.1; }
+.header-bar p { color: var(--muted); margin: 0; font-size: 14px; max-width: 680px; }
+.btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn {
+  border: 1px solid var(--border);
+  background: var(--panel2);
+  color: var(--text);
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all .15s ease;
+}
+.btn:hover:not(:disabled) { border-color: #555; background: var(--panel3); }
+.btn.danger { background: #2b1816; border-color: #5c322a; color: #f0a395; }
+.btn.danger:hover:not(:disabled) { background: #381f1c; border-color: #7d4439; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #1a160d; }
+.btn.primary:hover:not(:disabled) { background: #e0b656; }
+.btn.success { background: var(--accent2); border-color: var(--accent2); color: #10140c; }
+.btn.success:hover:not(:disabled) { background: #92b87b; }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 960px) { .grid { grid-template-columns: 1fr; } }
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.card-header h2 { font-size: 15px; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; }
+.badge {
+  font-size: 11px;
+  border: 1px solid var(--border);
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.badge.active { border-color: #806733; color: #efd88d; background: #282214; }
+.badge.danger { border-color: #632d25; color: #f0a395; background: #2a1513; }
+.badge.success { border-color: #3b522f; color: #a4ce8d; background: #172414; }
+
+.incident-box {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+}
+.incident-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.incident-row:last-child { border-bottom: none; }
+.incident-row .lbl { color: var(--muted); }
+.incident-row .val { font-weight: 600; }
+
+.approval-gate {
+  margin-top: 16px;
+  padding: 16px;
+  background: #231e13;
+  border: 1px solid #665022;
+  border-radius: 8px;
+}
+.approval-gate h3 { margin: 0 0 8px; font-size: 14px; color: #eed588; }
+.action-select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 13px;
+  margin: 8px 0 12px;
+}
+
+/* Timeline & Execution Trace */
+.trace-list { display: flex; flex-direction: column; gap: 10px; max-height: 520px; overflow-y: auto; padding-right: 4px; }
+.trace-item {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 13px;
+}
+.trace-item.SUCCESS { border-left: 3px solid var(--accent2); }
+.trace-item.FAILED { border-left: 3px solid var(--danger); }
+.trace-item.PENDING { border-left: 3px solid var(--accent); }
+.trace-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.trace-stage { font-weight: 700; font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--accent); }
+.trace-tool { color: var(--muted); font-size: 11px; font-family: monospace; }
+.trace-summary { font-size: 13px; margin: 4px 0 6px; line-height: 1.4; }
+.trace-raw {
+  background: #11110f;
+  border: 1px solid #282824;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-family: monospace;
+  font-size: 11px;
+  color: #c9c3b4;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+/* Demo sequence panel */
+.demo-banner {
+  background: #191814;
+  border: 1px solid #4a3e21;
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 24px;
+  font-size: 13px;
+}
+.demo-banner b { color: var(--accent); }
+.demo-steps { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px; }
+.demo-step-box { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; }
+.demo-step-box h4 { margin: 0 0 4px; font-size: 12px; text-transform: uppercase; color: var(--muted); }
+
+.empty-state { text-align: center; color: var(--muted); padding: 36px 12px; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div style="display: flex; align-items: center; gap: 16px;">
+    <div class="logo">OPS<b>MIND</b></div>
+    <a href="/checkout" target="_blank" style="text-decoration: none; font-size: 12px; font-weight: 600; color: #eed588; border: 1px solid var(--border); padding: 5px 12px; border-radius: 6px; background: var(--panel2);">
+      Open Target Payment App &rarr;
+    </a>
+  </div>
+  <div class="telemetry">
+    <div class="tele-item"><span class="dot" id="dotGw"></span> Gateway (:8080)</div>
+    <div class="tele-item"><span class="dot" id="dotBe"></span> Backend (:8081)</div>
+    <div class="tele-item"><span class="dot" id="dotLlm"></span> LLM (OpenRouter)</div>
+    <div class="tele-item"><span class="dot" id="dotHs"></span> Hindsight</div>
+  </div>
+</nav>
+
+<main>
+  <div class="demo-banner">
+    <b>Two-Incident Learning Demonstration</b>:
+    <div class="demo-steps">
+      <div class="demo-step-box">
+        <h4>Incident 1 (Test False Fix)</h4>
+        Trigger 502 &rarr; Investigate &rarr; Operator chooses <code>restart_payment_backend</code> &rarr; Verification Fails (config still points to 8099) &rarr; Failure Retained in Hindsight.
+      </div>
+      <div class="demo-step-box">
+        <h4>Incident 2 (Adaptive Recovery)</h4>
+        Reset sandbox &rarr; Trigger 502 &rarr; Investigate &rarr; Agent recalls prior failure &rarr; Recommends <code>rollback_gateway_config</code> &rarr; Verification Passes (200 OK) &rarr; Success Retained!
+      </div>
+    </div>
+  </div>
+
+  <div class="header-bar">
+    <div>
+      <h1>Autonomous Incident Response</h1>
+      <p>Real local service sandbox with live socket-level verification and Hindsight long-term experiential memory.</p>
+    </div>
+    <div class="btn-group">
+      <button class="btn danger" onclick="triggerIncident()" id="btnTrigger">1. Trigger 502 Incident</button>
+      <button class="btn" onclick="resetSandbox()" id="btnReset">Reset Sandbox</button>
+      <button class="btn primary" onclick="startInvestigation()" id="btnInvestigate">2. Investigate Incident</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- Left Column: Incident & Approval -->
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+      <section class="card">
+        <div class="card-header">
+          <h2>Active Sandbox Incident</h2>
+          <span class="badge" id="badgeIncident">CHECKING STATUS</span>
+        </div>
+        <div class="incident-box">
+          <div class="incident-row"><span class="lbl">Service</span><span class="val" id="valService">API Gateway &rarr; Payment Backend</span></div>
+          <div class="incident-row"><span class="lbl">Gateway Health</span><span class="val" id="valGwHealth">—</span></div>
+          <div class="incident-row"><span class="lbl">Active Upstream URL</span><span class="val" id="valUpstream" style="font-family: monospace;">—</span></div>
+          <div class="incident-row"><span class="lbl">Backend Health (:8081)</span><span class="val" id="valBeHealth">—</span></div>
+          <div class="incident-row"><span class="lbl">Incident Error</span><span class="val" id="valError" style="color: var(--danger);">—</span></div>
+        </div>
+
+        <div id="approvalSection" style="display: none;" class="approval-gate">
+          <h3>Human Operator Approval Gate</h3>
+          <p style="margin: 0 0 8px; font-size: 13px; color: #d2c8b0;">
+            The agent has gathered evidence and recommends an action. Human approval is strictly required before execution.
+          </p>
+          <div style="font-size: 12px; margin-bottom: 6px;"><b>Agent Recommendation:</b> <span id="lblRecAction" style="color: var(--accent); font-family: monospace;"></span></div>
+          <div style="font-size: 12px; margin-bottom: 8px;"><b>Confidence:</b> <span id="lblConfidence"></span></div>
+          
+          <label style="font-size: 11px; text-transform: uppercase; color: var(--muted);">Choose Remediation Action to Execute:</label>
+          <select id="actionSelect" class="action-select">
+            <option value="rollback_gateway_config">rollback_gateway_config (Restore upstream 8081)</option>
+            <option value="restart_payment_backend">restart_payment_backend (Test pitfall: restarts backend process)</option>
+            <option value="restart_gateway">restart_gateway (Reloads gateway process)</option>
+          </select>
+
+          <button class="btn success" style="width: 100%;" onclick="approveRemediation()" id="btnApprove">
+            Approve & Execute Remediation
+          </button>
+
+          <div id="remediationResultBox" style="display: none; margin-top: 14px; padding: 12px; border-radius: 6px; border: 1px solid var(--border);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-weight: 700; font-size: 13px;" id="remResTitle">Remediation Result</span>
+              <span class="badge" id="remResBadge">STATUS</span>
+            </div>
+            <div style="font-size: 12px; color: #d2c8b0; line-height: 1.4;" id="remResDetail"></div>
+            <div style="margin-top: 6px; font-size: 11px; font-family: monospace; color: var(--muted);" id="remResProof"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Diagnosis & Memory -->
+      <section class="card">
+        <div class="card-header">
+          <h2>Diagnosis & Experiential Memory</h2>
+          <span class="badge" id="badgeMemory">HINDSIGHT</span>
+        </div>
+        <div id="diagnosisBox" class="empty-state">
+          Trigger an incident and run investigation to observe autonomous diagnosis.
+        </div>
+      </section>
+    </div>
+
+    <!-- Right Column: Real Execution Trace -->
+    <div>
+      <section class="card">
+        <div class="card-header">
+          <h2>Real-Time Execution Trace</h2>
+          <span class="badge" id="badgeTrace">0 EVENTS</span>
+        </div>
+        <div id="traceList" class="trace-list">
+          <div class="empty-state">No execution trace events yet.</div>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script>
+let currentIncident = null;
+
+async function checkStatus() {
+  try {
+    const res = await fetch('/api/status');
+    const data = await res.json();
+    
+    // Telemetry dots
+    document.getElementById('dotGw').className = 'dot ' + (data.sandbox.gateway.status === 'HEALTHY' ? 'green' : (data.sandbox.gateway.status.includes('502') ? 'red' : 'amber'));
+    document.getElementById('dotBe').className = 'dot ' + (data.sandbox.backend.status === 'HEALTHY' ? 'green' : 'red');
+    document.getElementById('dotLlm').className = 'dot ' + (data.config.llm.configured ? 'green' : 'red');
+    document.getElementById('dotHs').className = 'dot ' + (data.config.hindsight.configured ? 'green' : 'amber');
+
+    // Values
+    document.getElementById('valGwHealth').textContent = data.sandbox.gateway.status;
+    document.getElementById('valUpstream').textContent = data.sandbox.gateway.configured_upstream || 'Unknown';
+    document.getElementById('valBeHealth').textContent = data.sandbox.backend.status;
+
+    const badge = document.getElementById('badgeIncident');
+    if (data.sandbox.incident_active) {
+      badge.textContent = 'INCIDENT ACTIVE (502)';
+      badge.className = 'badge danger';
+      document.getElementById('valError').textContent = 'HTTP 502 Bad Gateway';
+    } else if (data.sandbox.gateway.status === 'HEALTHY') {
+      badge.textContent = 'SYSTEM NOMINAL';
+      badge.className = 'badge success';
+      document.getElementById('valError').textContent = 'None (0 errors)';
+    } else {
+      badge.textContent = data.sandbox.gateway.status;
+      badge.className = 'badge';
+    }
+  } catch (err) {
+    console.error('Status check error:', err);
+  }
+}
+
+async function triggerIncident() {
+  document.getElementById('btnTrigger').disabled = true;
+  document.getElementById('badgeIncident').textContent = 'INJECTING 502...';
+  try {
+    const res = await fetch('/api/sandbox/trigger-incident', { method: 'POST' });
+    const data = await res.json();
+    await checkStatus();
+    renderTrace([{
+      stage: 'INCIDENT_TRIGGER',
+      tool_used: 'sandbox.trigger_incident',
+      input: { injected_upstream: 'http://127.0.0.1:8099' },
+      actual_output: data,
+      reasoning_summary: 'Deliberately corrupted gateway upstream port to 8099. Real HTTP traffic produced 502.',
+      timestamp: new Date().toISOString(),
+      status: 'FAILED'
+    }]);
+  } catch (err) {
+    alert('Failed to trigger incident: ' + err.message);
+  } finally {
+    document.getElementById('btnTrigger').disabled = false;
+  }
+}
+
+async function resetSandbox() {
+  document.getElementById('btnReset').disabled = true;
+  try {
+    const res = await fetch('/api/sandbox/reset', { method: 'POST' });
+    const data = await res.json();
+    await checkStatus();
+    document.getElementById('approvalSection').style.display = 'none';
+    if (document.getElementById('remediationResultBox')) {
+      document.getElementById('remediationResultBox').style.display = 'none';
+    }
+    document.getElementById('diagnosisBox').innerHTML = '<div class="empty-state">Sandbox reset to clean state. Ready for next incident.</div>';
+  } catch (err) {
+    alert('Reset failed: ' + err.message);
+  } finally {
+    document.getElementById('btnReset').disabled = false;
+  }
+}
+
+async function startInvestigation() {
+  document.getElementById('btnInvestigate').disabled = true;
+  if (document.getElementById('remediationResultBox')) {
+    document.getElementById('remediationResultBox').style.display = 'none';
+  }
+  document.getElementById('diagnosisBox').innerHTML = '<div class="empty-state">Running autonomous diagnostic agent loop...</div>';
+  try {
+    const res = await fetch('/api/investigate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        service: 'api-gateway',
+        severity: 'HIGH',
+        error: 'HTTP 502 Bad Gateway',
+        symptom: 'Gateway returning HTTP 502; upstream service connection failing'
+      })
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(errText);
+    }
+    const data = await res.json();
+    currentIncident = data;
+    renderInvestigation(data);
+    renderTrace(data.trace);
+  } catch (err) {
+    alert('Investigation error: ' + err.message);
+    document.getElementById('diagnosisBox').innerHTML = `<div style="color: var(--danger); font-size: 13px;">Investigation Failed: ${err.message}</div>`;
+  } finally {
+    document.getElementById('btnInvestigate').disabled = false;
+  }
+}
+
+function renderInvestigation(data) {
+  const rec = data.recommendation || {};
+  const memories = data.recalled_memories || [];
+  const reflection = data.reflection || 'No prior historical reflection recorded.';
+
+  let html = `
+    <div style="margin-bottom: 14px;">
+      <div style="font-size: 11px; text-transform: uppercase; color: var(--muted);">Diagnosis</div>
+      <div style="font-size: 14px; font-weight: 700; color: var(--accent); margin: 2px 0 6px;">${rec.diagnosis || 'Diagnosis Complete'}</div>
+      <div style="font-size: 13px; color: #d2c8b0; line-height: 1.4;">${rec.root_cause || 'Root cause analyzed.'}</div>
+    </div>
+    
+    <div style="margin-bottom: 14px; background: var(--panel2); padding: 10px; border-radius: 6px; border: 1px solid var(--border);">
+      <div style="font-size: 11px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px;">Evidence Reasoning</div>
+      <div style="font-size: 12px; color: var(--text);">${rec.reasoning_from_evidence || 'Evidence evaluated.'}</div>
+      ${rec.reasoning_from_history ? `<div style="margin-top: 6px; font-size: 12px; color: #e8d08b;"><b>Memory Impact:</b> ${rec.reasoning_from_history}</div>` : ''}
+    </div>
+
+    <div>
+      <div style="font-size: 11px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px;">Hindsight Memories (${memories.length})</div>
+      ${memories.length === 0 ? '<div style="font-size: 12px; color: var(--muted);">No historical memories stored yet for this pattern.</div>' :
+        memories.map(m => `<div style="font-size: 12px; padding: 6px; background: #131311; border-radius: 4px; margin-bottom: 4px; border-left: 2px solid var(--accent);">${m.text}</div>`).join('')
+      }
+      ${reflection ? `<div style="margin-top: 8px; font-size: 12px; color: #c0b8a4;"><b>Reflection:</b> ${reflection}</div>` : ''}
+    </div>
+  `;
+  document.getElementById('diagnosisBox').innerHTML = html;
+
+  // Show approval gate
+  const appSec = document.getElementById('approvalSection');
+  appSec.style.display = 'block';
+  document.getElementById('lblRecAction').textContent = rec.recommended_action || 'rollback_gateway_config';
+  document.getElementById('lblConfidence').textContent = Math.round((rec.confidence || 0.9) * 100) + '%';
+  document.getElementById('actionSelect').value = rec.recommended_action || 'rollback_gateway_config';
+}
+
+async function approveRemediation() {
+  const chosenAction = document.getElementById('actionSelect').value;
+  const btnApprove = document.getElementById('btnApprove');
+  const resBox = document.getElementById('remediationResultBox');
+  const resTitle = document.getElementById('remResTitle');
+  const resBadge = document.getElementById('remResBadge');
+  const resDetail = document.getElementById('remResDetail');
+  const resProof = document.getElementById('remResProof');
+
+  btnApprove.disabled = true;
+  btnApprove.textContent = 'Executing & Verifying...';
+  resBox.style.display = 'block';
+  resBox.style.background = '#1a1813';
+  resBox.style.borderColor = '#665022';
+  resTitle.textContent = 'Remediation In Progress';
+  resBadge.textContent = 'RUNNING';
+  resBadge.className = 'badge active';
+  resDetail.textContent = `Executing action '${chosenAction}' and dispatching independent verification probes...`;
+  resProof.textContent = '';
+
+  try {
+    const res = await fetch('/api/remediate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: chosenAction,
+        operator_approved: true
+      })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    renderTrace(data.trace);
+    await checkStatus();
+
+    const isResolved = data.status === 'RESOLVED';
+    if (isResolved) {
+      resBox.style.background = '#172414';
+      resBox.style.borderColor = '#3b522f';
+      resTitle.textContent = 'Remediation Succeeded — System Recovered';
+      resBadge.textContent = 'RESOLVED';
+      resBadge.className = 'badge success';
+      resDetail.innerHTML = `<strong>Action '${data.action_executed}' restored service health!</strong> Real gateway traffic recovered in ${data.duration_seconds}s. Experience retained in Hindsight.`;
+      resProof.textContent = `Verification Proof: ${data.verification.verification_proof || '3/3 probes 200 OK'}`;
+    } else {
+      resBox.style.background = '#2a1513';
+      resBox.style.borderColor = '#632d25';
+      resTitle.textContent = 'Remediation Ineffective — Failure Verified';
+      resBadge.textContent = 'FAILED';
+      resBadge.className = 'badge danger';
+      resDetail.innerHTML = `<strong>Action '${data.action_executed}' did not resolve the incident.</strong> Gateway remains in 502 state. Real failure experience retained in Hindsight for future learning.`;
+      resProof.textContent = `Verification Proof: ${data.verification.verification_proof || 'Gateway returned 502 Bad Gateway'}`;
+    }
+  } catch (err) {
+    resBox.style.background = '#2a1513';
+    resBox.style.borderColor = '#632d25';
+    resTitle.textContent = 'Remediation Error';
+    resBadge.textContent = 'ERROR';
+    resBadge.className = 'badge danger';
+    resDetail.textContent = 'Error: ' + err.message;
+  } finally {
+    btnApprove.disabled = false;
+    btnApprove.textContent = 'Approve & Execute Remediation';
+  }
+}
+
+function renderTrace(traceEvents) {
+  const container = document.getElementById('traceList');
+  if (!traceEvents || traceEvents.length === 0) {
+    container.innerHTML = '<div class="empty-state">No execution trace events yet.</div>';
+    document.getElementById('badgeTrace').textContent = '0 EVENTS';
+    return;
+  }
+  document.getElementById('badgeTrace').textContent = `${traceEvents.length} EVENTS`;
+
+  container.innerHTML = traceEvents.map((t, idx) => `
+    <div class="trace-item ${t.status}">
+      <div class="trace-head">
+        <span class="trace-stage">${t.stage}</span>
+        <span class="trace-tool">${t.tool_used}</span>
+      </div>
+      <div class="trace-summary">${t.reasoning_summary || 'Action performed.'}</div>
+      <div class="trace-raw">${escapeHtml(JSON.stringify(t.actual_output, null, 2))}</div>
+    </div>
+  `).join('');
+  container.scrollTop = container.scrollHeight;
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// Initial status poll
+checkStatus();
+setInterval(checkStatus, 3000);
+</script>
+</body>
+</html>
